@@ -1,0 +1,49 @@
+version: '3.7'
+
+services:
+
+  app: &app
+    build:
+      context: .
+      args:
+        UID: ${COMPOSE_UID}
+        GID: ${COMPOSE_GID}
+    command: python /opt/project/manage.py runserver 0:8000
+    environment:
+      - DJANGO_ENVIRONMENT=development
+    volumes:
+      - .:/opt/project
+    ports:
+      - 0.0.0.0:${PORT_DJANGO}:8000
+    depends_on:
+      - postgres-db
+      - redis
+
+  postgres-db:
+    image: postgres:14.4
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${DJANGO_DATABASES__default__USER}
+      - POSTGRES_PASSWORD=${DJANGO_DATABASES__default__PASSWORD}
+      - POSTGRES_DB=${DJANGO_DATABASES__default__NAME}
+    ports:
+      - 0.0.0.0:${PORT_POSTGRES}:${DJANGO_DATABASES__default__PORT}
+
+  redis:
+    image: redis:5.0.6-alpine
+    restart: unless-stopped
+    command: >
+      --requirepass ${REDIS_PASSWORD}
+
+  celery-worker:
+    <<: *app
+    command: celery -A project.celery:app worker -l info
+    restart: unless-stopped
+    ports: []
+    depends_on:
+      - app
+      - redis
+
+volumes:
+  postgres_data: {}
