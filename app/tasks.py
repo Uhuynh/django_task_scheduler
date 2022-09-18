@@ -1,9 +1,8 @@
-import time
-
-from celery import shared_task
+from project.celery import app
 
 
-@shared_task
-def create_task(task_type):
-    time.sleep(int(task_type) * 10)
-    return True
+@app.task()
+def company_name_bulk_create(count: int):
+    from app.models import CompanyName
+    obj_list = CompanyName().generate_obj_list(count)
+    CompanyName.objects.bulk_create(obj_list)

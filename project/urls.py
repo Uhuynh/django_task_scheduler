@@ -21,5 +21,6 @@ import app.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', app.views.IndexView.as_view(), name='app'),
+    path('', app.views.CompanyNameList.as_view(), name='app'),
+    # path('submit_task', app.views.submit_celery_task, name='submit-celery-task'),
 ]

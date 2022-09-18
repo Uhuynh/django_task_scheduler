@@ -1,16 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ title }}</title>
-</head>
-<body>
-{{ title }}
-<br>
-<br>
-{{ message }}
-<br>
-<br>
-{{ db_user }}
-</body>
-</html>
+{% load static %}
+
+{% block stylesheets %}
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+{% endblock %}
+
+
+{% block bodyContent %}
+    <head>
+        <meta charset="UTF-8">
+        <title>{{ title }}</title>
+    </head>
+    <body>
+    {{ title }}
+    <br>
+    <br>
+    <section class="section-no-padding-bottom">
+        <div class="main-content container-fluid">
+            <form id="company_name_form" method="POST"> {% csrf_token %}
+                <div class="form-group row">
+                    <label for="count" class="col-sm-4 col-form-label">Number of book(s) to create:*</label>
+                    <div class="col-sm-8" id="count">
+                        {{ form.count }}
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="execTime" class="col-sm-4 col-form-label">Execution time:*</label>
+                    <div class="col-sm-8" id="execTime">
+                        {{ form.execution_time }}
+                    </div>
+                </div>
+                <div>
+                    <input class="btn btn-primary" type="submit" value="Submit" name="task-submit" form="company_name_form"/>
+                </div>
+            </form>
+        </div>
+    </section>
+    </body>
+
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.1/js/bootstrap.min.js" integrity="sha512-vyRAVI0IEm6LI/fVSv/Wq/d0KUfrg3hJq2Qz5FlfER69sf3ZHlOrsLriNm49FxnpUGmhx+TaJKwJ+ByTLKT+Yg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+{% endblock %}
