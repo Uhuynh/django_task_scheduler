@@ -19,21 +19,42 @@
             <form id="company_name_form" method="POST"> {% csrf_token %}
                 <div class="form-group row">
                     <label for="count" class="col-sm-4 col-form-label">Number of book(s) to create:*</label>
-                    <div class="col-sm-8" id="count">
-                        {{ form.count }}
+                    <div class="col-sm-8">
+                        <input type="number" id="count" name="count" min="1" max="100" step="1" required>
+                        {#                        {{ form.count }}#}
                     </div>
                 </div>
                 <div class="form-group row">
                     <label for="execTime" class="col-sm-4 col-form-label">Execution time:*</label>
                     <div class="col-sm-8" id="execTime">
-                        {{ form.execution_time }}
+                        <input type="datetime-local" id="execution_time" name="execution_time" required>
+                        {#                        {{ form.execution_time }}#}
                     </div>
                 </div>
                 <div>
-                    <input class="btn btn-primary" type="submit" value="Submit" name="task-submit" form="company_name_form"/>
+                    {#                    <input class="btn btn-primary" type="submit" value="Submit" name="task-submit" form="company_name_form"/>#}
+                    <input class="btn btn-outline-success" id="bulk_btn" type='submit' value="Submit">
                 </div>
             </form>
+            <div class="row properties_table justify-content-center">
+            <table class="table table-hover"
+                   id="list_data"
+                   data-toggle="table"
+                    {#                   url= "{% url 'datawarehouse:mitarbeiterumsatzlist' %}"#}
+                   style="table-layout: fixed; width: 100%;">
+                <thead class="thead-dark">
+                <tr>
+                    <th data-field="task-id">Task ID</th>
+                    <th data-field="status">Status</th>
+                    <th data-field="result">Result</th>
+                </tr>
+                </thead>
+                <tbody id="listing">
+                </tbody>
+            </table>
         </div>
+        </div>
+
     </section>
     </body>
 
@@ -42,5 +63,109 @@
 {% block javascripts %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.1/js/bootstrap.min.js" integrity="sha512-vyRAVI0IEm6LI/fVSv/Wq/d0KUfrg3hJq2Qz5FlfER69sf3ZHlOrsLriNm49FxnpUGmhx+TaJKwJ+ByTLKT+Yg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    {#    <script>#}
+    {#        // custom javascript#}
+    {##}
+    {#        $(document).ready(() => {#}
+    {#            console.log('Sanity Check!');#}
+    {#        });#}
+    {##}
+    {#        $('.button').on('click', function() {#}
+    {#            $.ajax({#}
+    {#                url: '/tasks/',#}
+    {#                data: { type: $(this).data('type') },#}
+    {#                method: 'POST',#}
+    {#            })#}
+    {#                .done((res) => {#}
+    {#                    getStatus(res.task_id);#}
+    {#                })#}
+    {#                .fail((err) => {#}
+    {#                    console.log(err);#}
+    {#                });#}
+    {#        });#}
+    {##}
+    {#        function getStatus(taskID) {#}
+    {#            $.ajax({#}
+    {#                url: `/tasks/${taskID}/`,#}
+    {#                method: 'GET'#}
+    {#            })#}
+    {#                .done((res) => {#}
+    {#                    const html = `#}
+    {#      <tr>#}
+    {#        <td>${res.task_id}</td>#}
+    {#        <td>${res.task_status}</td>#}
+    {#        <td>${res.task_result}</td>#}
+    {#      </tr>`#}
+    {#                    $('#tasks').prepend(html);#}
+    {##}
+    {#                    const taskStatus = res.task_status;#}
+    {##}
+    {#                    if (taskStatus === 'SUCCESS' || taskStatus === 'FAILURE') return false;#}
+    {#                    setTimeout(function() {#}
+    {#                        getStatus(res.task_id);#}
+    {#                    }, 1000);#}
+    {#                })#}
+    {#                .fail((err) => {#}
+    {#                    console.log(err)#}
+    {#                });#}
+    {#        }#}
+    {#    </script>#}
+    <script>
+        const csrftoken = getCookie('csrftoken');
+        /**
+         * Helper function to get a cookie by its name.
+         * @param {string} name - Name of the cookie
+         * */
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                let cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    let cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
 
+        const task = {
+            sendData: function () {
+                const form = document.getElementById(`company_name_form`);
+                const url = `/submit_task/`;
+                $('#company_name_form').unbind('submit').bind('submit', function(event) {
+                    event.preventDefault();
+
+                    // get the current value entered in the form fields
+                    let execution_time = document.getElementById('execution_time').value;
+                    let count = document.getElementById('count').value;
+                    console.log(count);
+                    console.log(execution_time);
+                    // Post the new comment to the API
+
+                    // extract ids of Report entries to be updated
+                    $.ajax({
+                        method: 'POST',
+                        url: url,
+                        data: {'count': count, 'execution_time': execution_time},
+                        {#success: function (result) {#}
+                        {#    $.map(result, function (elem, i) {#}
+                        {#        ids[i]=elem['id'].toString();#}
+                        {#    });},#}
+                        complete: function () {form.reset();},
+                        error: function (err) { console.log(err) },});
+
+                });
+            },
+        }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            task.sendData();
+        })
+    </script>
 {% endblock %}

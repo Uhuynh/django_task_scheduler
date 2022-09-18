@@ -1,7 +1,9 @@
 import json
+import datetime
 
 import pytz
-from django.http import HttpResponseRedirect
+from celery.result import AsyncResult
+from django.http import HttpResponseRedirect, JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework import serializers
 from rest_framework import pagination
@@ -16,7 +18,6 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from app.forms import CompanyNameForm
 from app.models import CompanyName
 from app.tasks import company_name_bulk_create
 
@@ -27,7 +28,6 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Django Task Scheduler - Version ' + settings.VERSION
-        context['form'] = CompanyNameForm()
         return context
 
 
@@ -62,57 +62,24 @@ class CompanyNameResultsSetPagination(pagination.PageNumberPagination):
         })
 
 
-class CompanyNameList(View):
-    template_name = "app/home.html"
-
-    @method_decorator(login_required)
-    def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {
-            'form': CompanyNameForm()
-        })
-
-    def post(self, request, *args, **kwargs):
-        if 'task-submit' in request.POST:
-            form = CompanyNameForm(request.POST)
-            if form.is_valid():
-                company_name_bulk_create.apply_async(
-                    args=[form.cleaned_data['count']],
-                    eta=form.cleaned_data['execution_time'].astimezone(tz=pytz.utc).replace(tzinfo=None)
-                )
-                messages.success(request, 'Task was submitted successfully.')
-            else:
-                messages.error(request, 'Task was not submitted succesfully')
-        return HttpResponseRedirect('/')
-
-
 @api_view(['POST'])
 def submit_celery_task(request):
     if request.method == 'POST':
-        form = CompanyNameForm(request.POST)
-        if form.is_valid():
-            company_name_bulk_create.apply_async(
-                args=[form.cleaned_data['count']],
-                eta=form.cleaned_data['execution_time']
-            )
-            # set an interval to execute task every 1 second (purpose is to use for one-off task)
-            # schedule, created = IntervalSchedule.objects.get_or_create(
-            #     every=1,
-            #     period=IntervalSchedule.SECONDS,
-            # )
-            # PeriodicTask.objects.create(
-            #     interval=schedule,
-            #     name='Create company name',
-            #     task='app.tasks.company_name_bulk_create',
-            #     args=json.dumps([
-            #         form.cleaned_data['byid'],
-            #         form.cleaned_data['byid']
-            #     ])
-            # )
+        count = int(request.data['count'])
+        execution_time = datetime.datetime.fromisoformat(request.data['execution_time']).astimezone(tz=pytz.utc).replace(tzinfo=None)
+        task = company_name_bulk_create.apply_async(
+            args=[count],
+            eta=execution_time
+        )
+    return JsonResponse({"task_id": task.id}, status=202)
 
 
-
-# @api_view(['POST'])
-# def run_task(request):
-#     if request.POST:
-#         task_type = request.POST.get("type")
-#         return JsonResponse({"task_type": task_type}, status=202)
+@api_view(['GET'])
+def get_status(request, task_id):
+    task_result = AsyncResult(task_id)
+    result = {
+        "task_id": task_id,
+        "task_status": task_result.status,
+        "task_result": task_result.result
+    }
+    return JsonResponse(result, status=200)

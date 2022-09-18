@@ -45,5 +45,16 @@ services:
       - app
       - redis
 
+  flower:
+    <<: *app
+    restart: always
+    command: celery -A project.celery:app flower --address=0.0.0.0 --port=5566
+    ports:
+      - 0.0.0.0:${PORT_FLOWER}:5566
+    depends_on:
+      - app
+      - redis
+      - celery-worker
+
 volumes:
   postgres_data: {}
