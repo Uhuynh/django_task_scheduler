@@ -16,12 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.contrib.auth import views as auth_views
 
 import app.views
 
 urlpatterns = [
+    path('account/login/', auth_views.LoginView.as_view(), name='login'),
     path('admin/', admin.site.urls),
     path('', app.views.IndexView.as_view(), name='app'),
-    path('submit_task/', app.views.submit_celery_task, name='submit-celery-task'),
-    path("tasks/<task_id>/", app.views.get_status, name="get_status"),
+    path('submit_task/', app.views.submit_celery_task, name='submit-celery-task')
 ]

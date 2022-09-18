@@ -5,5 +5,4 @@ from project.celery import app
 def company_name_bulk_create(count: int):
     from app.models import CompanyName
     obj_list = CompanyName().generate_obj_list(count)
-    _, created = CompanyName.objects.bulk_create(obj_list)
-    return created
+    CompanyName.objects.bulk_create(obj_list)

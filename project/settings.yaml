@@ -78,6 +78,10 @@ default:
       PASSWORD: postgres
       PORT: 5432
 
+  # user auth
+  LOGIN_URL: login
+  LOGIN_REDIRECT_URL: app
+
   # Celery settings
   CELERY_ACCEPT_CONTENT: ['json']
   CELERY_TASK_SERIALIZER: json
